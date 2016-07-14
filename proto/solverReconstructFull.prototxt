@@ -1,0 +1,78 @@
+# from MNIST
+# The train/test net protocol buffer definition
+net: "proto/reconstructFull.prototxt"
+# test_iter specifies how many forward passes the test should carry out.
+# In the case of MNIST, we have test batch size 100 and 100 test iterations,
+# covering the full 10,000 testing images.
+# test_iter: 100
+# Carry out testing every 500 training iterations.
+# test_interval: 500
+# The base learning rate, momentum and the weight decay of the network.
+# base_lr: 0.01
+# momentum: 0.9
+# weight_decay: 0.0005
+# The learning rate policy
+# lr_policy: "inv"
+# gamma: 0.0001
+# power: 0.75
+# snapshot intermediate results
+snapshot: 200
+snapshot_prefix: "snapshots/reconstructing_full_extra"
+# solver mode: CPU or GPU
+solver_mode: GPU
+
+
+# from cifar10
+# reduce learning rate after 120 epochs (60000 iters) by factor 0f 10
+# then another factor of 10 after 10 more epochs (5000 iters)
+
+# test_iter specifies how many forward passes the test should carry out.
+# In the case of CIFAR10, we have test batch size 100 and 100 test iterations,
+# covering the full 10,000 testing images.
+test_iter: 50
+# Carry out testing every 1000 training iterations.
+test_interval: 1000
+# The base learning rate, momentum and the weight decay of the network.
+# base_lr: 0.000001 # nan
+# base_lr: 0.00000001 # good until 9000 (full network, loss = 400 000)
+base_lr: 0.00000001 #
+# base_lr: 0.00001 # not good
+# base_lr: 0.000001 # not good
+# base_lr: 0.00000001 # good
+# base_lr: 0.000000001 # good
+
+momentum: 0
+weight_decay: 0.004
+# The learning rate policy
+lr_policy: "fixed"
+# Display every 200 iterations
+display: 20
+# The maximum number of iterations
+max_iter: 15000
+# max_iter: 500000
+# snapshot intermediate results
+# snapshot: 5000
+# snapshot_format: HDF5
+
+
+# very good I think : snapshots/reconstructing_full__iter_5000.caffemodel
+# I0310 08:03:38.810786     1 solver.cpp:362] Snapshotting to snapshots/reconstructing_full__iter_5000.caffemodel
+# I0310 08:03:38.844604     1 solver.cpp:370] Snapshotting solver state to snapshots/reconstructing_full__iter_5000.solverstate
+# I0310 08:03:39.092372     1 solver.cpp:273] Iteration 5000, loss = 617776
+# I0310 08:03:39.092403     1 solver.cpp:291] Iteration 5000, Testing net (#0)
+# to achieve this, I:
+# - pretrained classification
+# - froze classification layers
+# - added reconstruction layers about 3 by 3, training on reconstructing mirror input layer's output
+# - froze all layers except the last one which is locally connected
+# - train
+# Result: snapshots/reconstructing_full__iter_9000.caffemodel
+# I0310 08:40:47.754514     1 solver.cpp:228]     Train net output #0: L2_loss = 421789 (* 1 = 421789 loss)
+# I0310 08:40:55.994431     1 solver.cpp:362] Snapshotting to snapshots/reconstructing_full__iter_9000.caffemodel
+# I0310 08:40:56.028842     1 solver.cpp:370] Snapshotting solver state to snapshots/reconstructing_full__iter_9000.solverstate
+# I0310 08:40:56.050928     1 solver.cpp:291] Iteration 9000, Testing net (#0)
+# I0310 08:41:18.976868     1 solver.cpp:342]     Test net output #0: L2_loss = 443938 (* 1 = 443938 loss)
+# Next things to try:
+# - add a locally connected layer at the end : --snapshot=snapshots/reconstructing_full_extra_iter_1200.solverstate or --snapshot=snapshots/reconstructing_full_extra_iter_10200.solverstate or --snapshot=snapshots/reconstructing_full_extra_iter_10600.solverstate
+# - unfreeze all reconstruction layers : snapshots/reconstructing_full_extra_iter_11800.solverstate
+# - unfreeze all layers

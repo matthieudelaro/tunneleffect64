@@ -1,0 +1,216 @@
+name: "miniLCLreconstruction"
+
+# # lmdb 100 train
+layers {
+  name: "data"
+  top: "data"
+  top: "label"
+  type: DATA
+  data_param {
+    # path to the DB
+    source: "/dataset/cifar10/cifar10_train_lmdb"
+    # type of DB: LEVELDB or LMDB (LMDB supports concurrent reads)
+    backend: LMDB
+    # batch processing improves efficiency.
+    batch_size: 750
+  }
+  transform_param {
+    mean_file: "/dataset/cifar10/mean.binaryproto"
+  }
+
+  include: { phase: TRAIN }
+}
+
+# # lmdb 100 test
+layers {
+  name: "data"
+  top: "data"
+  top: "label"
+  type: DATA
+  data_param {
+    # path to the DB
+    source: "/dataset/cifar10/cifar10_test_lmdb"
+    # type of DB: LEVELDB or LMDB (LMDB supports concurrent reads)
+    backend: LMDB
+    # batch processing improves efficiency.
+    batch_size: 750
+  }
+  transform_param {
+    mean_file: "/dataset/cifar10/mean.binaryproto"
+  }
+
+  include: { phase: TEST }
+}
+
+
+# 36 x 36
+# conv1_1
+# layers {  bottom: "data_nomean"  top: "conv1_1"  name: "conv1_1"  type: CONVOLUTION
+layers {  bottom: "data"  top: "conv1_1"  name: "conv1_1"  type: CONVOLUTION
+  blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+  convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+  weight_filler {      type: "xavier"          }
+    bias_filler {      type: "constant"      value: 0    }}}
+layers {  bottom: "conv1_1"  top: "conv1_1"  name: "relu1_1"  type: RELU}
+# conv1_2
+layers {  bottom: "conv1_1"  top: "conv1_2"  name: "conv1_2"  type: CONVOLUTION
+  blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+  convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+  weight_filler {      type: "xavier"          }
+    bias_filler {      type: "constant"      value: 0    }}}
+layers {  bottom: "conv1_2"  top: "conv1_2"  name: "relu1_2"  type: RELU}
+
+# pool1
+layers {
+  bottom: "conv1_2"  top: "pool1"
+  top:"pool1_mask"
+  name: "pool1"  type: POOLING
+  pooling_param {    pool: MAX    kernel_size: 2    stride: 2  }
+}
+        # conv2_1
+        layers {  bottom: "pool1"  top: "conv2_1"  name: "conv2_1"  type: CONVOLUTION
+          blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+          convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+          weight_filler {      type: "xavier"          }
+            bias_filler {      type: "constant"      value: 0    }}}
+        layers {  bottom: "conv2_1"  top: "conv2_1"  name: "relu2_1"  type: RELU}
+
+        # conv2_2
+        layers {  bottom: "conv2_1"  top: "conv2_2"  name: "conv2_2"  type: CONVOLUTION
+          blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+          convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+          weight_filler {      type: "xavier"          }
+            bias_filler {      type: "constant"      value: 0    }}}
+        layers {  bottom: "conv2_2"  top: "conv2_2"  name: "relu2_2"  type: RELU}
+
+        # pool2
+        layers {
+          bottom: "conv2_2"  top: "pool2"
+          top: "pool2_mask"
+          name: "pool2"  type: POOLING
+          pooling_param {    pool: MAX    kernel_size: 2    stride: 2  }
+        }
+
+        # conv3_1
+        layers {  bottom: "pool2"  top: "conv3_1"  name: "conv3_1"  type: CONVOLUTION
+        blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+        convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+        weight_filler {      type: "xavier"          }
+          bias_filler {      type: "constant"      value: 0    }}}
+        layers {  bottom: "conv3_1"  top: "conv3_1"  name: "reul3_1"  type: RELU}
+
+        # conv3_2
+        layers {  bottom: "conv3_1"  top: "conv3_2"  name: "conv3_2"  type: CONVOLUTION
+        blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+        convolution_param {    num_output: 64    pad: 1    kernel_size: 3
+        weight_filler {      type: "xavier"          }
+          bias_filler {      type: "constant"      value: 0    }}}
+        layers {  bottom: "conv3_2"  top: "conv3_2"  name: "reul3_2"  type: RELU}
+
+        # pool3
+        layers {
+        bottom: "conv3_2"  top: "pool3"
+        top: "pool3_mask"
+        name: "pool3"  type: POOLING
+        pooling_param {    pool: MAX    kernel_size: 2    stride: 2  }
+        }
+
+        # middleConv50
+        layers { bottom: 'pool3' top: 'middleConv50' name: 'middleConv50' type: CONVOLUTION
+          blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+          convolution_param { kernel_size: 4 num_output: 50
+          weight_filler {      type: "xavier"          }
+          bias_filler {      type: "constant"      value: 0    }} }
+        layers {  bottom: "middleConv50"  top: "middleConv50"  name: "relu6"  type: RELU}
+
+        #################################################
+        ##### MIDDLE
+        #################################################
+
+
+
+layers {
+  bottom: "middleConv50"
+  top: "fc7.50"
+  name: "fc7.50"
+  type: INNER_PRODUCT
+  blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+  inner_product_param {
+    num_output: 1024
+    weight_filler {type: "xavier"}
+    bias_filler {type: "constant"}
+  }
+}
+layers {
+  name: "drop7"
+  type: DROPOUT
+  bottom: "fc7.50"
+  top: "fc7.50"
+  dropout_param {dropout_ratio: 0.5}
+  include {phase: TRAIN}
+}
+layers {
+  bottom: "fc7.50"
+  top: "fc7.50"
+  name: "relu7"
+  type: RELU
+}
+
+layers {
+  bottom: "fc7.50"
+  top: "fc8.2.10"
+  name: "fc8.2.10"
+  type: INNER_PRODUCT
+  blobs_lr: 1 blobs_lr: 2 weight_decay: 0 weight_decay: 0
+  inner_product_param {
+    num_output: 10
+    weight_filler {type: "xavier"}
+    bias_filler {type: "constant"}
+  }
+}
+
+layers {
+  bottom: "fc8.2.10"
+  bottom: "label"
+  top: "prob"
+  name: "prob"
+  type: SOFTMAX_LOSS
+}
+
+layers {
+  name: "accurLayerWinnerTop1"
+  type: ACCURACY
+  bottom:"fc8.2.10"
+  bottom: "label"
+  top: "accurLayerWinnerTop1"
+  include {phase: TEST}
+  accuracy_param {top_k: 1}
+}
+
+layers {
+  name: "accurLayerWinnerTop5"
+  type: ACCURACY
+  bottom:"fc8.2.10"
+  bottom: "label"
+  top: "accurLayerWinnerTop5"
+  include {phase: TEST}
+  accuracy_param {top_k: 5}
+}
+
+layers {
+  name: "silence1"
+  type: SILENCE
+  bottom: "pool1_mask"
+}
+
+layers {
+  name: "silence2"
+  type: SILENCE
+  bottom: "pool2_mask"
+}
+
+layers {
+  name: "silence3"
+  type: SILENCE
+  bottom: "pool3_mask"
+}
