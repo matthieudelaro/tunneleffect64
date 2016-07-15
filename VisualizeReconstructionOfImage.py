@@ -47,5 +47,5 @@ output = np.rot90(X.swapaxes(0, 2))
 output = np.rot90(output)
 output = np.rot90(output)
 outputName = "model--" + baseName + "--prototxt--" + baseNameProto +  '.png'
-# scipy.misc.imsave(outputName, output)
+scipy.misc.imsave(outputName, output)
 print("Result saved to " + outputName)
